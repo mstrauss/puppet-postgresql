@@ -23,7 +23,8 @@ define postgresql::database(
   $dbname   = $title,
   $tablespace = undef,
   $charset  = $postgresql::params::charset,
-  $locale   = $postgresql::params::locale
+  $locale   = $postgresql::params::locale,
+  $owner    = undef,
 ) {
   include postgresql::params
 
@@ -47,7 +48,13 @@ define postgresql::database(
     $public_revoke_privilege = 'ALL'
   }
 
-  $createdb_command_tmp = "${postgresql::params::createdb_path} --template=template0 --encoding '${charset}' ${locale_option} '${dbname}'"
+  # Optionally set the database owner
+  $owner_option = $owner ? {
+    undef   => '',
+    default => "-O ${owner}"
+  }
+
+  $createdb_command_tmp = "${postgresql::params::createdb_path} --template=template0 --encoding '${charset}' ${locale_option} '${dbname}' ${owner_option}"
 
   if($tablespace == undef) {
     $createdb_command = $createdb_command_tmp
