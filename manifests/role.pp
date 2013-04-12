@@ -17,7 +17,7 @@
 # limitations under the License.
 
 define postgresql::role(
-    $password_hash,
+    $password_hash    = false,
     $createdb         = false,
     $createrole       = false,
     $db               = 'postgres',
@@ -40,9 +40,13 @@ define postgresql::role(
   $createdb_sql    = $createdb    ? { true => 'CREATEDB'    , default => 'NOCREATEDB' }
   $superuser_sql   = $superuser   ? { true => 'SUPERUSER'   , default => 'NOSUPERUSER' }
   $replication_sql = $replication ? { true => 'REPLICATION' , default => '' }
+  $password_sql    = $password_hash ? {
+    false   => '',
+    default => "ENCRYPTED PASSWORD '${password_hash}'"
+  }
 
   # TODO: FIXME: Will not correct the superuser / createdb / createrole / login / replication status nor the connection limit of a role that already exists
-  postgresql_psql {"CREATE ROLE \"${username}\" ENCRYPTED PASSWORD '${password_hash}' ${login_sql} ${createrole_sql} ${createdb_sql} ${superuser_sql} ${replication_sql} CONNECTION LIMIT ${connection_limit}":
+  postgresql_psql {"CREATE ROLE \"${username}\" ${password_sql} ${login_sql} ${createrole_sql} ${createdb_sql} ${superuser_sql} ${replication_sql} CONNECTION LIMIT ${connection_limit}":
     db        => $db,
     psql_user => $postgresql::params::user,
     unless    => "SELECT rolname FROM pg_roles WHERE rolname='${username}'",
