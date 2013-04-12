@@ -25,6 +25,7 @@ define postgresql::role(
     $login            = false,
     $superuser        = false,
     $replication      = false,
+    $noinherit        = false,
     $connection_limit = '-1',
     $username         = $title
 ) {
@@ -56,13 +57,14 @@ define postgresql::role(
   $createdb_sql    = $createdb    ? { true => 'CREATEDB'    , default => 'NOCREATEDB' }
   $superuser_sql   = $superuser   ? { true => 'SUPERUSER'   , default => 'NOSUPERUSER' }
   $replication_sql = $replication ? { true => 'REPLICATION' , default => '' }
+  $noinherit_sql   = $noinherit   ? { true => 'NOINHERIT'   , default => '' }
   $password_sql    = $_password_hash ? {
     false   => '',
     default => "ENCRYPTED PASSWORD '${_password_hash}'"
   }
 
   # TODO: FIXME: Will not correct the superuser / createdb / createrole / login / replication status nor the connection limit of a role that already exists
-  postgresql_psql {"CREATE ROLE \"${username}\" ${password_sql} ${login_sql} ${createrole_sql} ${createdb_sql} ${superuser_sql} ${replication_sql} CONNECTION LIMIT ${connection_limit}":
+  postgresql_psql {"CREATE ROLE \"${username}\" ${password_sql} ${login_sql} ${createrole_sql} ${createdb_sql} ${superuser_sql} ${replication_sql} ${noinherit_sql} CONNECTION LIMIT ${connection_limit}":
     db        => $db,
     psql_user => $postgresql::params::user,
     unless    => "SELECT rolname FROM pg_roles WHERE rolname='${username}'",
